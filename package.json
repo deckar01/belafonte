@@ -60,8 +60,9 @@
     "url": "git://github.com/guerrerocarlos/cachep2p.git"
   },
   "scripts": {
-    "build": "browserify -s CacheP2P -e ./ | uglifyjs -c warnings=false -m > cachep2p.min.js",
-    "build-debug": "browserify -s CacheP2P -e ./ > webtorrent.debug.js",
+    "build:browserify": "browserify -s CacheP2P -e ./ > cachep2p.js",
+    "build:minify": "cat cachep2p.js | uglifyjs -c warnings=false -m > cachep2p.min.js",
+    "build": "npm run build:browserify && npm run build:minify",
     "size": "npm run build && cat cachep2p.min.js | gzip | wc -c",
     "test": "standard && node ./bin/test.js",
     "test-browser": "zuul -- test/*.js test/browser/*.js",
