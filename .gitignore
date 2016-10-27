@@ -1,3 +1,2 @@
 node_modules
-cachep2p.js
-cachep2p.min.js
+dist/*.js

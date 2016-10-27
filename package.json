@@ -1,11 +1,10 @@
 {
-  "name": "cachep2p",
-  "description": "The Peer to Peer Cache for the Masses",
-  "version": "0.1.5",
+  "name": "belafonte",
+  "description": "A peer to peer content distribution network",
+  "version": "0.2.0",
   "author": {
-    "name": "Carlos Guerrero",
-    "email": "carlos@carlosguerrero.com",
-    "url": "https://cachep2p.com"
+    "name": "Jared Deckard",
+    "email": "jared.deckard@gmail.com"
   },
   "browser": {},
   "browserify": {
@@ -14,59 +13,46 @@
     ]
   },
   "bugs": {
-    "url": "https://github.com/guerrerocarlos/cachep2p/issues"
+    "url": "https://github.com/deckar01/belafonte/issues"
   },
   "dependencies": {
+    "create-torrent": "^3.25.1",
     "safe-buffer": "^5.0.1",
-    "simple-sha1": "^2.0.8",
-    "webtorrent": "git+https://github.com/guerrerocarlos/webtorrent.git"
+    "webtorrent": "^0.97.2"
   },
   "devDependencies": {
     "browserify": "^13.0.1",
-    "debug": "^2.2.0",
+    "eslint": "^3.8.1",
     "uglifyjs": "^2.4.10"
   },
   "engines": {
     "node": ">=4"
   },
-  "homepage": "https://cachep2p.com",
   "keywords": [
-    "cache",
-    "p2p",
-    "web2web",
-    "cachep2p",
-    "p2pcache",
-    "web2webcache",
-    "cacheweb2web",
     "bittorrent",
-    "bittorrent client",
-    "download",
-    "mad science",
+    "cache",
+    "cdn",
     "p2p",
-    "peer-to-peer",
-    "peers",
-    "streaming",
-    "swarm",
+    "peer",
+    "seed",
+    "share",
     "torrent",
-    "web torrent",
-    "webrtc",
-    "webrtc data",
-    "webtorrent"
+    "web2web",
+    "webtorrent",
+    "webrtc"
   ],
   "license": "MIT",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/guerrerocarlos/cachep2p.git"
+    "url": "git://github.com/deckar01/belafonte.git"
   },
   "scripts": {
-    "build:browserify": "browserify -s CacheP2P -e ./ > cachep2p.js",
-    "build:minify": "cat cachep2p.js | uglifyjs -c warnings=false -m > cachep2p.min.js",
+    "build:browserify": "browserify -s Belafonte -e ./ > dist/belafonte.js",
+    "build:minify": "cat dist/belafonte.js | uglifyjs -c warnings=false -m > dist/belafonte.min.js",
     "build": "npm run build:browserify && npm run build:minify",
-    "size": "npm run build && cat cachep2p.min.js | gzip | wc -c",
-    "test": "standard && node ./bin/test.js",
-    "test-browser": "zuul -- test/*.js test/browser/*.js",
-    "test-browser-headless": "zuul --electron -- test/*.js test/browser/*.js",
-    "test-browser-local": "zuul --local -- test/*.js test/browser/*.js"
+    "prepublish": "npm run build",
+    "lint": "eslint src",
+    "test": "npm run lint"
   }
 }
