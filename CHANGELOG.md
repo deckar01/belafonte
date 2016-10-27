@@ -1,5 +1,9 @@
 # Belafonte Version History
 
+## v0.2.1 - 2016-10-27
+
+- Setup Bower
+
 ## v0.2.0 - 2016-10-26
 
 - Forked as "Belafonte" from "CacheP2P"
