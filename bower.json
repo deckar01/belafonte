@@ -1,0 +1,26 @@
+{
+  "name": "belafonte",
+  "description": "A peer to peer content distribution network",
+  "main": "dist/belafonte.min.js",
+  "authors": [
+    "Jared Deckard <jared.deckard@gmail.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "bittorrent",
+    "cache",
+    "cdn",
+    "p2p",
+    "peer",
+    "seed",
+    "share",
+    "torrent",
+    "web2web",
+    "webtorrent",
+    "webrtc"
+  ],
+  "homepage": "https://github.com/deckar01/belafonte",
+  "scripts": {
+    "postinstall": "npm run build"
+  }
+}
