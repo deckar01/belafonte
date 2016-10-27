@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test 1</title>
+  </head>
+  <body>
+    <a href="/example/test2.html">Test 2</a>
+
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="/dist/belafonte.js"></script>
+
+    <script type="text/javascript">
+      $.getJSON('/example/info-hashes.json')
+      .done(function(infoHashes) {
+        belafonte = new Belafonte(infoHashes);
+      });
+    </script>
+  </body>
+</hmtl>
