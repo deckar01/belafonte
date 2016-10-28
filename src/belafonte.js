@@ -163,7 +163,7 @@ Belafonte.prototype.scanLinks = function(){
  */
 Belafonte.prototype.torrentLink = function(link) {
   // Only torrent links for this site.
-  if(link.origin !== document.origin) { return; }
+  if(link.origin !== location.origin) { return; }
   // Remove the url hash like HTTP.
   var url = link.href.split('#')[0];
   // Get the torrent for this URL.
