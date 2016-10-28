@@ -1,5 +1,11 @@
 # Belafonte Version History
 
+## v0.3.0 - 2016-10-27
+
+- Seed the original resource instead of serializing the DOM (#1)
+- Use location.origin since document.origin is non-standard
+- Set the initial page state URL
+
 ## v0.2.1 - 2016-10-27
 
 - Setup Bower
