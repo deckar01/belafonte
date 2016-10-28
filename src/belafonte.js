@@ -44,6 +44,9 @@ function Belafonte(metadata, options) {
   this.client.on('torrent', this.handleTorrent.bind(this));
   // Torrent links and and load pages from the cache when they are clicked.
   this.scanLinks();
+  // Setup the navigation state for the current page.
+  var currentURL = location.href.split('#')[0];
+  window.history.replaceState({url: currentURL}, document.title, currentURL);
   // Load pages from the cache on browser history navigation.
   window.onpopstate = function(event) { self.loadPage(event.state.url); };
   // Seed the current page.
