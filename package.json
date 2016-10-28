@@ -16,8 +16,8 @@
     "url": "https://github.com/deckar01/belafonte/issues"
   },
   "dependencies": {
+    "blob-to-buffer": "^1.2.6",
     "create-torrent": "^3.25.1",
-    "safe-buffer": "^5.0.1",
     "webtorrent": "^0.97.2"
   },
   "devDependencies": {

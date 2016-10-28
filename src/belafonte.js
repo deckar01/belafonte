@@ -1,6 +1,6 @@
 var WebTorrent = require('webtorrent');
 var defaultAnnounceList = require('create-torrent').announceList;
-var Buffer = require('safe-buffer').Buffer;
+var toBuffer = require('blob-to-buffer');
 
 /**
  * Downloads cached copies of the site's pages over WebTorrent and loads them
@@ -50,7 +50,7 @@ function Belafonte(metadata, options) {
   // Load pages from the cache on browser history navigation.
   window.onpopstate = function(event) { self.loadPage(event.state.url); };
   // Seed the current page.
-  this.seed(location.href.split('#')[0], document.documentElement.innerHTML);
+  this.seed(currentURL);
 }
 
 /**
@@ -64,29 +64,55 @@ Belafonte.cache = {};
 Belafonte.torrents = {};
 
 /**
+ * Get the original resource data from the browser's cache.
+ *
+ * @param {string} url The URL of the resource.
+ * @param {Function} callback The callback that recieves the buffer.
+ */
+Belafonte.prototype.getResourceBuffer = function(url, callback) {
+  var headers = new Headers();
+  // Fetch the resource from any cache.
+  headers.append('cache-control', 'public, max-age=315360000');
+  fetch(url, {method: 'GET', headers: headers})
+  .then(function(response) {
+    // Load the resource as a binary blob.
+    if(response.ok) { return response.blob(); }
+  })
+  .then(function(blob) {
+    // If the resource is empty or missing don't call back.
+    if(!blob) { return; }
+    // Pack the blob data into a buffer.
+    toBuffer(blob, function(err, buffer) {
+      if(err) { return; }
+      callback(buffer);
+    });
+  });
+};
+
+/**
  * Share an existing resource via torrent.
  *
  * @param {string} url The URL of the resource to share.
  * @param {string} resource The utf8 encoded content to share.
  */
-Belafonte.prototype.seed = function(url, resource) {
+Belafonte.prototype.seed = function(url) {
   var info = this.info[url];
   // If there is no info for the URL or the resource is already being seeded,
   // then there is nothing to do.
   if(!info || Belafonte.torrents[info.hash]) { return; }
-  // Pack the resource into a binary format the torrent client can use.
-  var buffer = Buffer.from(resource, 'utf8');
-  // The name and creation date are required for a deterministic info hash.
-  var seedOptions = {
-    name: url,
-    creationDate: info.date,
-    announce: this.announceList,
-  };
-  // Send the resource data and tracker options to the torrent client.
-  this.client.seed(buffer, seedOptions, function(torrent) {
-    Belafonte.torrents[torrent.infoHash] = torrent;
-    Belafonte.cache[torrent.infoHash] = resource;
-  });
+  this.getResourceBuffer(url, function(buffer) {
+    // The name and creation date are required for a deterministic info hash.
+    var seedOptions = {
+      name: url,
+      creationDate: info.date,
+      announce: this.announceList,
+    };
+    // Send the resource data and tracker options to the torrent client.
+    this.client.seed(buffer, seedOptions, function(torrent) {
+      Belafonte.torrents[torrent.infoHash] = torrent;
+      Belafonte.cache[torrent.infoHash] = buffer.toString('utf8');
+    });
+  }.bind(this));
 };
 
 /**
