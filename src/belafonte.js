@@ -122,23 +122,31 @@ Belafonte.prototype.handleTorrent = function(torrent) {
 };
 
 /**
- * Start torrenting links and setup click handlers to load pages from the cache.
+ * Start torrenting the links on the page.
  */
 Belafonte.prototype.scanLinks = function(){
-  var self = this;
   var links = Array.prototype.slice.call(document.getElementsByTagName('a'));
-  links.forEach(function(link) {
-    // Only torrent links for this site.
-    if(link.origin !== document.origin) { return; }
-    // Remove the url hash like HTTP.
-    var url = link.href.split('#')[0];
-    // Get the torrent for this URL.
-    var torrent = self.torrent(url);
-    // If there is no torrent, then leave the link alone.
-    if(!torrent) { return; }
-    // Load the page from the cache when the link is clicked.
-    link.onclick = function(event){ self.loadPage(event.target.href, event); };
-  });
+  links.forEach(this.torrentLink.bind(this));
+};
+
+/**
+ * Start torrenting the link's URL and setup a listener to load the page from
+ * the cache.
+ *
+ * @param {Element} link The link element to torrent.
+ */
+Belafonte.prototype.torrentLink = function(link) {
+  // Only torrent links for this site.
+  if(link.origin !== document.origin) { return; }
+  // Remove the url hash like HTTP.
+  var url = link.href.split('#')[0];
+  // Get the torrent for this URL.
+  var torrent = this.torrent(url);
+  // If there is no torrent, then leave the link alone.
+  if(!torrent) { return; }
+  // Load the page from the cache when the link is clicked.
+  var linkHandler = function(event){ this.loadPage(event.target.href, event); };
+  link.onclick = linkHandler.bind(this);
 };
 
 /**
