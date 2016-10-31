@@ -1,5 +1,9 @@
 # Belafonte Version History
 
+## v0.4.1 - 2016-10-31
+
+- Support custom trackers from the command line
+
 ## v0.4.0 - 2016-10-31
 
 - Generate the metadata file using a command line utility (#3)

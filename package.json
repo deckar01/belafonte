@@ -1,7 +1,7 @@
 {
   "name": "belafonte",
   "description": "A peer to peer content distribution network",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": {
     "name": "Jared Deckard",
     "email": "jared.deckard@gmail.com"
