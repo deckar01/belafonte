@@ -12,16 +12,21 @@ var defaultAnnounceList = require('create-torrent').announceList;
 
 Command
 .version(version)
-.option('-o, --output <file>', 'Save the hash list')
+.option('-o, --output <file>', 'Save the hash list to a JSON file')
 .option('-p, --pretty', 'Format the JSON output')
 .option('-s, --seed', 'Seed the files')
+.option('-t, --trackers <file>', 'Read the tracker list from a JSON file')
 .arguments('<origin> [files...]')
 .action(function(origin, files) {
   Command.origin = origin;
-  // Use the WebTorrent client to calculate info hashes.
-  Command.torrentClient = new WebTorrent();
-  // Wait for all the files to be read and hashed.
-  Promise.all(files.map(getInfoHash))
+  getTrackers()
+  .then(function(trackers) {
+    Command.announceList = trackers;
+    // Use the WebTorrent client to calculate info hashes.
+    Command.torrentClient = new WebTorrent();
+    // Wait for all the files to be read and hashed.
+    return Promise.all(files.map(getInfoHash));
+  })
   .then(function(infoHashes) {
     // Stop the WebTorrent client unless it needs to continue seeding.
     if(!Command.seed) { Command.torrentClient.destroy(); }
@@ -56,6 +61,32 @@ Command
 Command.parse(process.argv);
 
 /**
+ * Get the tracker list from a file or use the default tracker list.
+ *
+ * @return {Promise.<Object>} A promise for the tracker list.
+ */
+function getTrackers() {
+  if(Command.trackers) {
+    // Read the tracker list from a file.
+    return fs.readFile(Command.trackers)
+    .then(function(trackerData) {
+      try {
+        // Parse the tracker list as JSON
+        return JSON.parse(trackerData);
+      } catch(err) {
+        // Add context to the JSON parsing error.
+        err.message = 'Error parsing trackers: ' + err.message;
+        // Reject the promise if the JSON is invalid.
+        return Promise.reject(err);
+      }
+    });
+  } else {
+    // Use the default tracker list.
+    return Promise.resolve(defaultAnnounceList);
+  }
+}
+
+/**
  * Compute the info hash for a file.
  *
  * @param {string} file The path to a file.
@@ -72,8 +103,8 @@ function getInfoHash(file) {
       var seedOptions = {
         // Name the torrent after the full URL to the file.
         name: url.resolve(Command.origin, file),
-        // TODO: Allow configuring the tracker list.
-        announce: defaultAnnounceList,
+        // Seed to the configured the tracker list.
+        announce: Command.announceList,
       };
       // WebTorrent requires seeding the file to compute the info hash.
       var torrent = Command.torrentClient.seed(stream, seedOptions)
