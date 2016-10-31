@@ -1,5 +1,10 @@
 # Belafonte Version History
 
+## v0.4.0 - 2016-10-31
+
+- Generate the metadata file using a command line utility (#3)
+- Remove the date from the metadata format
+
 ## v0.3.0 - 2016-10-27
 
 - Seed the original resource instead of serializing the DOM (#1)
