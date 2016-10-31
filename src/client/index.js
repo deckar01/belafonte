@@ -6,28 +6,19 @@ var toBuffer = require('blob-to-buffer');
  * Downloads cached copies of the site's pages over WebTorrent and loads them
  * into the document when a link is clicked.
  *
- * @param {Object[]} metadata Metadata for the site content.
- * @param {string} metadata[].url The URL for the content.
- * @param {string} metadata[].hash The info hash of the content.
- * @param {string|number} metadata[].date The date the content was last modified
- *   in RFC2822 format, in ISO 8601 format, or as the number of milliseconds
- *   since the Unix Epoch.
+ * @param {Object} infoHashes Info hashes for the site content keyed by URL.
  * @param {Object} [options] Optional parameters.
  * @param {string} [options.marker] The string to prefix to page titles when
  *   they are loaded from the WebTorrent cache.
  * @param {Array} [options.announceList] The list of torrent trackers to use.
  */
-function Belafonte(metadata, options) {
+function Client(infoHashes, options) {
   var self = this;
   // Metadata is required to discover and verify torrents.
-  if(!metadata) {
-    throw new Error('You must provide metadata for the site content.');
+  if(!infoHashes) {
+    throw new Error('You must provide info hashes for the site content.');
   }
-  // Index the metadata by URL.
-  this.info = {};
-  metadata.forEach(function(info) {
-    self.info[info.url] = {hash: info.hash, date: info.date};
-  });
+  this.infoHashes = infoHashes;
   // Setup default options.
   options = options || {};
   this.marker = options.marker || '\u2605'; // Unicode star "★"
@@ -39,9 +30,9 @@ function Belafonte(metadata, options) {
     }).join('&');
   }).join('&');
   // Start the torrent client.
-  this.client = new WebTorrent();
+  this.torrentClient = new WebTorrent();
   // Add a resource to the cache when its torrent is complete.
-  this.client.on('torrent', this.handleTorrent.bind(this));
+  this.torrentClient.on('torrent', this.handleTorrent.bind(this));
   // Torrent links and and load pages from the cache when they are clicked.
   this.scanLinks();
   // Setup the navigation state for the current page.
@@ -56,12 +47,12 @@ function Belafonte(metadata, options) {
 /**
  * Cached resources keyed by info hash.
  */
-Belafonte.cache = {};
+Client.cache = {};
 
 /**
  * Active torrents keyed by info hash.
  */
-Belafonte.torrents = {};
+Client.torrents = {};
 
 /**
  * Get the original resource data from the browser's cache.
@@ -69,7 +60,7 @@ Belafonte.torrents = {};
  * @param {string} url The URL of the resource.
  * @param {Function} callback The callback that recieves the buffer.
  */
-Belafonte.prototype.getResourceBuffer = function(url, callback) {
+Client.prototype.getResourceBuffer = function(url, callback) {
   var headers = new Headers();
   // Fetch the resource from any cache.
   headers.append('cache-control', 'public, max-age=315360000');
@@ -95,22 +86,21 @@ Belafonte.prototype.getResourceBuffer = function(url, callback) {
  * @param {string} url The URL of the resource to share.
  * @param {string} resource The utf8 encoded content to share.
  */
-Belafonte.prototype.seed = function(url) {
-  var info = this.info[url];
-  // If there is no info for the URL or the resource is already being seeded,
-  // then there is nothing to do.
-  if(!info || Belafonte.torrents[info.hash]) { return; }
+Client.prototype.seed = function(url) {
+  var infoHash = this.infoHashes[url];
+  // If there is no info hash or the resource is already being seeded, then
+  // there is nothing to do.
+  if(!infoHash || Client.torrents[infoHash]) { return; }
   this.getResourceBuffer(url, function(buffer) {
     // The name and creation date are required for a deterministic info hash.
     var seedOptions = {
       name: url,
-      creationDate: info.date,
       announce: this.announceList,
     };
     // Send the resource data and tracker options to the torrent client.
-    this.client.seed(buffer, seedOptions, function(torrent) {
-      Belafonte.torrents[torrent.infoHash] = torrent;
-      Belafonte.cache[torrent.infoHash] = buffer.toString('utf8');
+    this.torrentClient.seed(buffer, seedOptions, function(torrent) {
+      Client.torrents[torrent.infoHash] = torrent;
+      Client.cache[torrent.infoHash] = buffer.toString('utf8');
     });
   }.bind(this));
 };
@@ -122,14 +112,16 @@ Belafonte.prototype.seed = function(url) {
  *
  * @returns {Torrent} torrent The torrent for the URL or undefined if not found.
  */
-Belafonte.prototype.torrent = function(url){
-  var info = this.info[url];
+Client.prototype.torrent = function(url){
+  var infoHash = this.infoHashes[url];
   // If there is no info for the resource, then there is nothing to do.
-  if(!info) { return; }
-  // Torrenting the resource by its magnet link.
-  return Belafonte.torrents[info.hash] = (
-    Belafonte.torrents[info.hash] ||
-    this.client.add(this.magnetURI(url, info.hash))
+  if(!infoHash) { return; }
+  // Return the torrent object and save it to the torrent list.
+  return Client.torrents[infoHash] = (
+    // Use the existing torrent if it has already been added.
+    Client.torrents[infoHash] ||
+    // Torrent the resource by its magnet link.
+    this.torrentClient.add(this.magnetURI(url, infoHash))
   );
 };
 
@@ -138,20 +130,22 @@ Belafonte.prototype.torrent = function(url){
  *
  * @param {Torrent} torrent The complete torrent.
  */
-Belafonte.prototype.handleTorrent = function(torrent) {
+Client.prototype.handleTorrent = function(torrent) {
   // Unpack the buffer.
   torrent.files[0].getBuffer(function(err, buffer) {
     if (err) { return; }
     // Store the resource in the cache.
-    Belafonte.cache[torrent.infoHash] = buffer.toString('utf8');
+    Client.cache[torrent.infoHash] = buffer.toString('utf8');
   });
 };
 
 /**
  * Start torrenting the links on the page.
  */
-Belafonte.prototype.scanLinks = function(){
+Client.prototype.scanLinks = function(){
+  // Get all the link elements as an array.
   var links = Array.prototype.slice.call(document.getElementsByTagName('a'));
+  // Try to start torrenting all of the links.
   links.forEach(this.torrentLink.bind(this));
 };
 
@@ -161,7 +155,7 @@ Belafonte.prototype.scanLinks = function(){
  *
  * @param {Element} link The link element to torrent.
  */
-Belafonte.prototype.torrentLink = function(link) {
+Client.prototype.torrentLink = function(link) {
   // Only torrent links for this site.
   if(link.origin !== location.origin) { return; }
   // Remove the url hash like HTTP.
@@ -181,10 +175,10 @@ Belafonte.prototype.torrentLink = function(link) {
  * @param {string} url The URL of the page to load.
  * @param {Event} [event] The event to cancel if the page is cached.
  */
-Belafonte.prototype.loadPage = function(url, event) {
+Client.prototype.loadPage = function(url, event) {
   // Look for the page in the cache.
-  var info = this.info[url];
-  var resource = info && Belafonte.cache[info.hash];
+  var infoHash = this.infoHashes[url];
+  var resource = Client.cache[infoHash];
   // If the page is not cached, then let the browser handle the link.
   if(!resource) return;
   if(event) {
@@ -209,7 +203,7 @@ Belafonte.prototype.loadPage = function(url, event) {
  *
  * @param {string} magnetURI The magnet link for the resource.
  */
-Belafonte.prototype.magnetURI = function(url, infoHash) {
+Client.prototype.magnetURI = function(url, infoHash) {
   return (
     'magnet:?' +
     // Identify the torrent using the info hash.
@@ -221,4 +215,4 @@ Belafonte.prototype.magnetURI = function(url, infoHash) {
   );
 };
 
-module.exports = Belafonte;
+module.exports = Client;

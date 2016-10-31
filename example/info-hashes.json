@@ -1,12 +1,4 @@
-[
-  {
-    "url": "http://localhost:3000/example/test1.html",
-    "hash": "6a303a8f989c24b8e6739fb11a78930bb3f5dc47",
-    "date": "10/26/2016"
-  },
-  {
-    "url": "http://localhost:3000/example/test2.html",
-    "hash": "602dcf1428487357b2cbcd1b3c1219e85f285b06",
-    "date": "10/26/2016"
-  }
-]
+{
+  "http://localhost:3000/example/test1.html": "6a303a8f989c24b8e6739fb11a78930bb3f5dc47",
+  "http://localhost:3000/example/test2.html": "602dcf1428487357b2cbcd1b3c1219e85f285b06"
+}
