@@ -26,6 +26,7 @@
   "devDependencies": {
     "browserify": "^13.0.1",
     "eslint": "^3.8.1",
+    "eslint-config-airbnb-base": "^9.0.0",
     "uglifyjs": "^2.4.10"
   },
   "engines": {

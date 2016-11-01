@@ -1,6 +1,6 @@
-var WebTorrent = require('webtorrent');
-var defaultAnnounceList = require('create-torrent').announceList;
-var toBuffer = require('blob-to-buffer');
+const WebTorrent = require('webtorrent');
+const defaultAnnounceList = require('create-torrent').announceList;
+const toBuffer = require('blob-to-buffer');
 
 /**
  * Downloads cached copies of the site's pages over WebTorrent and loads them
@@ -13,7 +13,6 @@ var toBuffer = require('blob-to-buffer');
  * @param {Array} [options.announceList] The list of torrent trackers to use.
  */
 function Client(infoHashes, options) {
-  var self = this;
   // Metadata is required to discover and verify torrents.
   if(!infoHashes) {
     throw new Error('You must provide info hashes for the site content.');
@@ -24,10 +23,8 @@ function Client(infoHashes, options) {
   this.marker = options.marker || '\u2605'; // Unicode star "★"
   this.announceList = options.announceList || defaultAnnounceList;
   // Serialize the announce list as magnet tracker parameters.
-  this.trackers = this.announceList.map(function(trackers) {
-    return trackers.map(function(tracker) {
-      return 'tr=' + encodeURI(tracker);
-    }).join('&');
+  this.trackers = this.announceList.map((trackers) => {
+    return trackers.map((tracker) => 'tr=' + encodeURI(tracker)).join('&');
   }).join('&');
   // Start the torrent client.
   this.torrentClient = new WebTorrent();
@@ -36,10 +33,10 @@ function Client(infoHashes, options) {
   // Torrent links and and load pages from the cache when they are clicked.
   this.scanLinks();
   // Setup the navigation state for the current page.
-  var currentURL = location.href.split('#')[0];
+  const currentURL = location.href.split('#')[0];
   window.history.replaceState({url: currentURL}, document.title, currentURL);
   // Load pages from the cache on browser history navigation.
-  window.onpopstate = function(event) { self.loadPage(event.state.url); };
+  window.onpopstate = (event) => this.loadPage(event.state.url);
   // Seed the current page.
   this.seed(currentURL);
 }
@@ -61,19 +58,19 @@ Client.torrents = {};
  * @param {Function} callback The callback that recieves the buffer.
  */
 Client.prototype.getResourceBuffer = function(url, callback) {
-  var headers = new Headers();
+  const headers = new Headers();
   // Fetch the resource from any cache.
   headers.append('cache-control', 'public, max-age=315360000');
   fetch(url, {method: 'GET', headers: headers})
-  .then(function(response) {
+  .then((response) => {
     // Load the resource as a binary blob.
     if(response.ok) { return response.blob(); }
   })
-  .then(function(blob) {
+  .then((blob) => {
     // If the resource is empty or missing don't call back.
     if(!blob) { return; }
     // Pack the blob data into a buffer.
-    toBuffer(blob, function(err, buffer) {
+    toBuffer(blob, (err, buffer) => {
       if(err) { return; }
       callback(buffer);
     });
@@ -87,22 +84,22 @@ Client.prototype.getResourceBuffer = function(url, callback) {
  * @param {string} resource The utf8 encoded content to share.
  */
 Client.prototype.seed = function(url) {
-  var infoHash = this.infoHashes[url];
+  const infoHash = this.infoHashes[url];
   // If there is no info hash or the resource is already being seeded, then
   // there is nothing to do.
   if(!infoHash || Client.torrents[infoHash]) { return; }
-  this.getResourceBuffer(url, function(buffer) {
+  this.getResourceBuffer(url, (buffer) => {
     // The name and creation date are required for a deterministic info hash.
-    var seedOptions = {
+    const seedOptions = {
       name: url,
       announce: this.announceList,
     };
     // Send the resource data and tracker options to the torrent client.
-    this.torrentClient.seed(buffer, seedOptions, function(torrent) {
+    this.torrentClient.seed(buffer, seedOptions, (torrent) => {
       Client.torrents[torrent.infoHash] = torrent;
       Client.cache[torrent.infoHash] = buffer.toString('utf8');
     });
-  }.bind(this));
+  });
 };
 
 /**
@@ -113,7 +110,7 @@ Client.prototype.seed = function(url) {
  * @returns {Torrent} torrent The torrent for the URL or undefined if not found.
  */
 Client.prototype.torrent = function(url){
-  var infoHash = this.infoHashes[url];
+  const infoHash = this.infoHashes[url];
   // If there is no info for the resource, then there is nothing to do.
   if(!infoHash) { return; }
   // Return the torrent object and save it to the torrent list.
@@ -132,7 +129,7 @@ Client.prototype.torrent = function(url){
  */
 Client.prototype.handleTorrent = function(torrent) {
   // Unpack the buffer.
-  torrent.files[0].getBuffer(function(err, buffer) {
+  torrent.files[0].getBuffer((err, buffer) => {
     if (err) { return; }
     // Store the resource in the cache.
     Client.cache[torrent.infoHash] = buffer.toString('utf8');
@@ -144,9 +141,9 @@ Client.prototype.handleTorrent = function(torrent) {
  */
 Client.prototype.scanLinks = function(){
   // Get all the link elements as an array.
-  var links = Array.prototype.slice.call(document.getElementsByTagName('a'));
+  const links = Array.prototype.slice.call(document.getElementsByTagName('a'));
   // Try to start torrenting all of the links.
-  links.forEach(this.torrentLink.bind(this));
+  links.forEach((link) => this.torrentLink(link));
 };
 
 /**
@@ -159,14 +156,13 @@ Client.prototype.torrentLink = function(link) {
   // Only torrent links for this site.
   if(link.origin !== location.origin) { return; }
   // Remove the url hash like HTTP.
-  var url = link.href.split('#')[0];
+  const url = link.href.split('#')[0];
   // Get the torrent for this URL.
-  var torrent = this.torrent(url);
+  const torrent = this.torrent(url);
   // If there is no torrent, then leave the link alone.
   if(!torrent) { return; }
   // Load the page from the cache when the link is clicked.
-  var linkHandler = function(event){ this.loadPage(event.target.href, event); };
-  link.onclick = linkHandler.bind(this);
+  link.onclick = (event) => this.loadPage(event.target.href, event);
 };
 
 /**
@@ -177,8 +173,8 @@ Client.prototype.torrentLink = function(link) {
  */
 Client.prototype.loadPage = function(url, event) {
   // Look for the page in the cache.
-  var infoHash = this.infoHashes[url];
-  var resource = Client.cache[infoHash];
+  const infoHash = this.infoHashes[url];
+  const resource = Client.cache[infoHash];
   // If the page is not cached, then let the browser handle the link.
   if(!resource) return;
   if(event) {
@@ -190,7 +186,7 @@ Client.prototype.loadPage = function(url, event) {
   // Insert the cached content into the page.
   document.documentElement.innerHTML = resource;
   // Mark the title to signify that the page was loaded from the cache.
-  if(this.marker) { document.title = this.marker + ' ' + document.title; }
+  if(this.marker) { document.title = `${this.marker} ${document.title}`; }
   // Setup the new links to load from the cache.
   this.scanLinks();
 };
@@ -207,9 +203,9 @@ Client.prototype.magnetURI = function(url, infoHash) {
   return (
     'magnet:?' +
     // Identify the torrent using the info hash.
-    'xt=urn:btih:' + infoHash + '&' +
+    `xt=urn:btih:${infoHash}&` +
     // Name the torrent after the resource's original URL.
-    'dn=' + encodeURI(url) + '&' +
+    `dn=${encodeURI(url)}&` +
     // Discover peers the using the list of trackers.
     this.trackers
   );
