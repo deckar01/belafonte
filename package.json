@@ -55,8 +55,7 @@
   },
   "scripts": {
     "build:browserify": "browserify -s Belafonte -e ./src/client/index.js > dist/belafonte.js",
-    "build:minify": "cat dist/belafonte.js | uglifyjs -c warnings=false -m > dist/belafonte.min.js",
-    "build": "npm run build:browserify && npm run build:minify",
+    "build": "npm run build:browserify",
     "prepublish": "npm run build",
     "lint": "eslint src",
     "test": "npm run lint"
