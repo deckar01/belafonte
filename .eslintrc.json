@@ -2,26 +2,13 @@
   "env": {
     "es6": true
   },
-  "extends": "eslint:recommended",
+  "extends": "airbnb-base/legacy",
   "rules": {
-    "indent": [
+    "no-param-reassign": [
       "error",
-      2
-    ],
-    "linebreak-style": [
-      "error",
-      "unix"
-    ],
-    "quotes": [
-      "error",
-      "single",
       {
-        "avoidEscape": true
+        "props": false
       }
-    ],
-    "semi": [
-      "error",
-      "always"
     ]
   }
 }
