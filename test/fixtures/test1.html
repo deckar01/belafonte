@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test 1</title>
+  </head>
+  <body>
+    <a href="/test/fixtures/test2.html">Test 2</a>
+
+    <script type="text/javascript" src="/dist/belafonte.js"></script>
+    <script type="text/javascript">
+      fetch('/test/fixtures/info-hashes.json')
+      .then(function (response) { return response.json(); })
+      .then(function (infoHashes) {
+        belafonte = new Belafonte(infoHashes);
+      });
+    </script>
+  </body>
+</hmtl>
