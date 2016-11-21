@@ -1,5 +1,7 @@
 # Belafonte
 
+![build status](https://travis-ci.org/deckar01/belafonte.svg?branch=master)
+
 **Belafonte** is a content distribution network (CDN) that geographically
 distributes assets over the BitTorrent protocol using
 [WebTorrent](https://webtorrent.io/).
