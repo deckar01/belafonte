@@ -38,7 +38,7 @@
     "uglifyjs": "^2.4.10"
   },
   "engines": {
-    "node": ">=4"
+    "node": ">=6.9.1"
   },
   "keywords": [
     "bittorrent",
